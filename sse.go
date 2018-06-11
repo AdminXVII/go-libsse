@@ -11,7 +11,8 @@ type Server struct {
     
     options *Options
     shutdown chan bool
-    clients map[*Client]bool // mimic a set
+    lastEventId string
+    clients map[*client]bool // mimic a set
 }
 
 // NewServer creates a new SSE server.
@@ -23,7 +24,7 @@ func NewServer(options *Options) *Server {
     s := &Server{
         options: options,
         shutdown: make(chan bool),
-        clients: make(map[*Client]bool),
+        clients: make(map[*client]bool),
     }
 
     return s
@@ -32,34 +33,17 @@ func NewServer(options *Options) *Server {
 // ServeHTTP is the basic handler for go's http package
 func (s *Server) ServeHTTP(response http.ResponseWriter, request *http.Request) {
     if request.Method == "GET" {
-        headers := response.Header()
-    
-        if s.options.HasHeaders() {
-            for header, value := range s.options.Headers {
-                headers.Set(header, value)
-            }
-        }
-        headers.Set("Content-Type", "text/event-stream")
-        headers.Set("Cache-Control", "no-cache")
-        headers.Set("Connection", "keep-alive")
-        
-        c := NewClient(response)
-        
-        if s.options.InitClient != nil {
-            lastEventId := request.Header.Get("Last-Event-ID")
-            s.options.InitClient(c, lastEventId)
-        }
-        
+        c := newClient(response, s.options.Headers)
         s.addClient(c)
-
-        closeNotify := response.(http.CloseNotifier).CloseNotify()
-        go func() {
-            <-closeNotify
-            s.removeClient(c)
-        }()
-
-        c.SendMessage(&Message{Retry: s.options.RetryInterval})
-        c.Listen()
+        c.sendMessage(&Message{Retry: s.options.RetryInterval})
+        
+        if s.options.InitMessages != nil {
+            lastEventId := request.Header.Get("Last-Event-ID")
+            c.intro = s.options.InitMessages(lastEventId, s.LastEventId())
+        }
+        
+        c.listen()
+        s.removeClient(c)
     } else if request.Method != "OPTIONS" {
         response.WriteHeader(http.StatusMethodNotAllowed)
     }
@@ -71,14 +55,18 @@ func (s *Server) SendMessage(message *Message) {
     s.RLock()
     for c, open := range s.clients {
         if open {
-            c.SendMessage(message)
+            go c.sendMessage(message)
         }
     }
     s.RUnlock()
 }
 
+func (s *Server) LastEventId() string {
+  return s.lastEventId
+}
+
 // GetClientCount outputs the current number of active http connections
-func (s *Server) GetClientCount() int {
+func (s *Server) GetClientsCount() int {
     s.RLock()
     num := len(s.clients)
     s.RUnlock()
@@ -86,19 +74,19 @@ func (s *Server) GetClientCount() int {
     return num
 }
 
-func (s *Server) addClient(client *Client) {
+func (s *Server) addClient(client *client) {
     s.options.Logger.Print("new client")
     s.Lock()
     s.clients[client] = true
     s.Unlock()
 }
 
-func (s *Server) removeClient(client *Client) {
+func (s *Server) removeClient(client *client) {
     s.options.Logger.Print("removing client")
     s.Lock()
     delete(s.clients, client)
     s.Unlock()
-    client.Close()
+    client.close()
 }
 
 

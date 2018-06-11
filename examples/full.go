@@ -25,9 +25,8 @@ func main() {
           "go-sse: ",
           log.Ldate|log.Ltime|log.Lshortfile),
         // Add pertinent info first
-        InitClient: func(client *sse.Client, LastEventId string) bool {
-          client.SendMessage(&sse.Message{Id: "42", Data: "This is the answer to life, to the universe and to everything else",})
-          return true
+        InitMessages: func(ClientLastEventId string, ServerLastEventId string) []*sse.Message {
+          return []*sse.Message{&sse.Message{Data: ServerLastEventId}, &sse.Message{Id: "42", Data: "This is the answer to life, to the universe and to everything else"}}
         },
     })
 
@@ -35,18 +34,11 @@ func main() {
     http.Handle("/events/", s)
 
     go func () {
-        for {
-            s.SendMessage(&sse.Message{Data: time.Now().String()})
-            time.Sleep(5 * time.Second)
-        }
-    }()
-
-    go func () {
         i := 0
         for {
             i++
             s.SendMessage(&sse.Message{Data: strconv.Itoa(i)})
-            time.Sleep(5 * time.Second)
+            time.Sleep(time.Second)
         }
     }()
 

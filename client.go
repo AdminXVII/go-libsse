@@ -5,23 +5,33 @@ import (
   "fmt"
 )
 
-type Client struct {
+type client struct {
     messages chan *Message
+    intro []*Message
     response http.ResponseWriter
 }
 
-// NewClient creates a new http client which will wait for messages
-func NewClient(res http.ResponseWriter) *Client {
-    return &Client{messages: make(chan *Message, 100), response: res}
+// newClient creates a new http client which will wait for messages
+func newClient(res http.ResponseWriter, headers map[string]string) *client {
+    responseHeaders := res.Header()
+
+    for header, value := range headers {
+        responseHeaders.Set(header, value)
+    }
+    responseHeaders.Set("Content-Type", "text/event-stream")
+    responseHeaders.Set("Cache-Control", "no-cache")
+    responseHeaders.Set("Connection", "keep-alive")
+    
+    return &client{messages: make(chan *Message), response: res}
 }
 
-// SendMessage sends a message to client.
-func (c *Client) SendMessage(message *Message) {
+// sendMessage sends a message to client.
+func (c *client) sendMessage(message *Message) {
     c.messages <- message
 }
 
-// Listen makes the client wait for messages and emit the messages as SSE
-func (c *Client) Listen() {
+// listen makes the client wait for messages and emit the messages as SSE
+func (c *client) listen() {
     flusher, ok := c.response.(http.Flusher)
     if !ok {
         http.Error(c.response, "Streaming unsupported.", http.StatusInternalServerError)
@@ -30,6 +40,16 @@ func (c *Client) Listen() {
     
     c.response.WriteHeader(http.StatusOK)
     flusher.Flush()
+
+    closeNotify := c.response.(http.CloseNotifier).CloseNotify()
+    go func() {
+        <-closeNotify
+    }()
+    
+    for _, msg := range c.intro {
+        fmt.Fprintf(c.response, msg.String())
+        flusher.Flush()
+    }
     
     for msg := range c.messages {
         fmt.Fprintf(c.response, msg.String())
@@ -37,7 +57,7 @@ func (c *Client) Listen() {
     }
 }
 
-// Close closes the client and exit the Listen function if applicable
-func (c *Client) Close() {
+// close closes the client and exit the Listen function if applicable
+func (c *client) close() {
     close(c.messages)
 }
