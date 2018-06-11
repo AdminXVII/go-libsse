@@ -7,7 +7,6 @@
 // Basic usage of sse package.
 //
 //    s := sse.NewServer(nil)
-//    defer s.Shutdown()
 //
 //    http.Handle("/events/", s)
 //
