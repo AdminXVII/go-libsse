@@ -1,4 +1,4 @@
-# go-sse [![Build Status](https://travis-ci.org/AdminXVII/go-sse.svg?branch=master)](https://travis-ci.org/AdminXVII/go-sse) [![GoDoc](https://godoc.org/github.com/AdminXVII/go-sse?status.svg)](http://godoc.org/github.com/AdminXVII/go-sse)
+# go-libsse [![Build Status](https://travis-ci.org/AdminXVII/go-libsse.svg?branch=master)](https://travis-ci.org/AdminXVII/go-libsse) [![GoDoc](https://godoc.org/github.com/AdminXVII/go-libsse?status.svg)](http://godoc.org/github.com/AdminXVII/go-libsse)
 
 Server-Sent Events for Go
 
@@ -8,7 +8,7 @@ Inspired from [alexandrevincenzi's work](https://github.com/alexandrevicenzi/go-
 
 [Server-sent events](http://www.html5rocks.com/en/tutorials/eventsource/basics/) is a method of continuously sending data from a server to the browser, rather than repeatedly requesting it, replacing the "long polling way".
 
-`go-sse` is a small library to create a Server-Sent Events server in Go.
+`go-libsse` is a small, thread-safe library to create a Server-Sent Events server in Go.
 
 ## Features
 
@@ -20,8 +20,6 @@ Inspired from [alexandrevincenzi's work](https://github.com/alexandrevicenzi/go-
 
 ## Getting Started
 
-Simple Go example that send messages to all clients.
-
 ```go
 package main
 
@@ -31,7 +29,7 @@ import (
     "strconv"
     "time"
 
-    "github.com/AdminXVII/go-sse"
+    "github.com/AdminXVII/go-libsse"
 )
 
 func main() {

@@ -7,7 +7,7 @@ import (
     "time"
     "os"
 
-    "github.com/AdminXVII/go-sse"
+    "github.com/AdminXVII/go-libsse"
 )
 
 func main() {
