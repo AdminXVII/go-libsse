@@ -9,13 +9,8 @@
     <div id="messages"></div>
 
     <script type="text/javascript">
-        e1 = new EventSource('/events/channel-1');
+        e1 = new EventSource('/events/');
         e1.onmessage = function(event) {
-            document.getElementById('messages').innerHTML += event.data + '<br>';
-        };
-
-        e2 = new EventSource('/events/channel-2');
-        e2.onmessage = function(event) {
             document.getElementById('messages').innerHTML += event.data + '<br>';
         };
     </script>

@@ -1,7 +1,6 @@
 package sse
 
 import (
-    "net/http"
     "log"
 )
 
@@ -10,11 +9,10 @@ type Options struct {
     RetryInterval int
     // Headers allow to set custom headers (useful for CORS support).
     Headers map[string]string
-    // ChannelNameFunc allow to create custom channel names.
-    // Default channel name is the request path.
-    ChannelNameFunc func (*http.Request) string
     // All usage logs end up in Logger
     Logger *log.Logger
+    // Called when a new client appears. Return false if client should not be added
+    InitClient func(client *Client, LastEventId string) bool
 }
 
 func (opt *Options) HasHeaders() bool {
