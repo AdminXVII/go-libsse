@@ -49,7 +49,7 @@ func (s *Server) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 
 // SendMessage broadcast a message to all clients
 func (s *Server) SendMessage(message Message) {
-    s.options.Logger.Print("sending message")
+    s.log("sending message")
     s.RLock()
     for c, open := range s.clients {
         if open {
@@ -73,23 +73,28 @@ func (s *Server) GetClientsCount() int {
 }
 
 func (s *Server) addClient(client *client) {
-    s.options.Logger.Print("new client")
+    s.log("new client")
     s.Lock()
     s.clients[client] = true
     s.Unlock()
 }
 
 func (s *Server) removeClient(client *client) {
-    s.options.Logger.Print("removing client")
+    s.log("removing client")
     s.Lock()
     delete(s.clients, client)
     s.Unlock()
 }
 
+func (s *Server) log(info string) {
+    if s.options.Logger != nil {
+        s.options.Logger.Print(info)
+    }
+}
 
 // Restart closes all clients and allow new connections.
 func (s *Server) Restart() {
-    s.options.Logger.Print("restarting server.")
+    s.log("restarting server.")
     
     s.Lock()
     for client, _ := range s.clients {
