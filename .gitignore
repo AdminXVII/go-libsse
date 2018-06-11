@@ -22,3 +22,10 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+# Debug profiles
+cover.out
+cover.html
+cover.sh
+
+comp.sh

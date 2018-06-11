@@ -10,7 +10,6 @@ type Server struct {
     sync.RWMutex
     
     options *Options
-    shutdown chan bool
     lastEventId string
     clients map[*client]bool // mimic a set
 }
@@ -23,7 +22,6 @@ func NewServer(options *Options) *Server {
 
     s := &Server{
         options: options,
-        shutdown: make(chan bool),
         clients: make(map[*client]bool),
     }
 
@@ -35,7 +33,7 @@ func (s *Server) ServeHTTP(response http.ResponseWriter, request *http.Request) 
     if request.Method == "GET" {
         c := newClient(response, s.options.Headers)
         s.addClient(c)
-        c.sendMessage(&Message{Retry: s.options.RetryInterval})
+        c.sendMessage(Message{Retry: s.options.RetryInterval})
         
         if s.options.InitMessages != nil {
             lastEventId := request.Header.Get("Last-Event-ID")
@@ -50,7 +48,7 @@ func (s *Server) ServeHTTP(response http.ResponseWriter, request *http.Request) 
 }
 
 // SendMessage broadcast a message to all clients
-func (s *Server) SendMessage(message *Message) {
+func (s *Server) SendMessage(message Message) {
     s.options.Logger.Print("sending message")
     s.RLock()
     for c, open := range s.clients {
@@ -86,7 +84,6 @@ func (s *Server) removeClient(client *client) {
     s.Lock()
     delete(s.clients, client)
     s.Unlock()
-    client.close()
 }
 
 

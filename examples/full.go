@@ -25,8 +25,8 @@ func main() {
           "go-sse: ",
           log.Ldate|log.Ltime|log.Lshortfile),
         // Add pertinent info first
-        InitMessages: func(ClientLastEventId string, ServerLastEventId string) []*sse.Message {
-          return []*sse.Message{&sse.Message{Data: ServerLastEventId}, &sse.Message{Id: "42", Data: "This is the answer to life, to the universe and to everything else"}}
+        InitMessages: func(ClientLastEventId string, ServerLastEventId string) []sse.Message {
+          return []sse.Message{sse.Message{Data: ServerLastEventId}, sse.Message{Id: "42", Data: "This is the answer to life, to the universe and to everything else"}}
         },
     })
 
@@ -37,7 +37,7 @@ func main() {
         i := 0
         for {
             i++
-            s.SendMessage(&sse.Message{Data: strconv.Itoa(i)})
+            s.SendMessage(sse.Message{Data: strconv.Itoa(i)})
             time.Sleep(time.Second)
         }
     }()

@@ -12,9 +12,5 @@ type Options struct {
     // All usage logs end up in Logger
     Logger *log.Logger
     // Called when a new client appears. Return a set of messages to send before current messages
-    InitMessages func(ClientLastEventId string, ServerLastEventId string) []*Message
-}
-
-func (opt *Options) HasHeaders() bool {
-    return opt.Headers != nil && len(opt.Headers) > 0
+    InitMessages func(ClientLastEventId string, ServerLastEventId string) []Message
 }

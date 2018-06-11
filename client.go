@@ -2,12 +2,11 @@ package sse
 
 import (
   "net/http"
-  "fmt"
 )
 
 type client struct {
-    messages chan *Message
-    intro []*Message
+    messages chan Message
+    intro []Message
     response http.ResponseWriter
 }
 
@@ -22,11 +21,11 @@ func newClient(res http.ResponseWriter, headers map[string]string) *client {
     responseHeaders.Set("Cache-Control", "no-cache")
     responseHeaders.Set("Connection", "keep-alive")
     
-    return &client{messages: make(chan *Message), response: res}
+    return &client{messages: make(chan Message, 10), response: res}
 }
 
 // sendMessage sends a message to client.
-func (c *client) sendMessage(message *Message) {
+func (c *client) sendMessage(message Message) {
     c.messages <- message
 }
 
@@ -44,15 +43,16 @@ func (c *client) listen() {
     closeNotify := c.response.(http.CloseNotifier).CloseNotify()
     go func() {
         <-closeNotify
+        c.close()
     }()
     
     for _, msg := range c.intro {
-        fmt.Fprintf(c.response, msg.String())
+        msg.ToBuffer().WriteTo(c.response)
         flusher.Flush()
     }
     
     for msg := range c.messages {
-        fmt.Fprintf(c.response, msg.String())
+        msg.ToBuffer().WriteTo(c.response)
         flusher.Flush()
     }
 }
