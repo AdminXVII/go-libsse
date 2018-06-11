@@ -1,4 +1,4 @@
-// Package sse implements Server-Sent Events that supports multiple channels.
+// Package sse implements a fully concurrent Server-Sent Events library.
 //
 // Server-sent events is a method of continuously sending data from a server to the browser, rather than repeatedly requesting it.
 //

@@ -1,30 +1,43 @@
 package sse
 
+import (
+  "net/http"
+  "fmt"
+)
+
 type Client struct {
-    lastEventId,
-    channel string
-    send chan *Message
+    messages chan *Message
+    response http.ResponseWriter
 }
 
-func NewClient(lastEventId, channel string) *Client {
-    return &Client{
-        lastEventId,
-        channel,
-        make(chan *Message),
-    }
+// NewClient creates a new http client which will wait for messages
+func NewClient(res http.ResponseWriter) *Client {
+    return &Client{messages: make(chan *Message, 100), response: res}
 }
 
 // SendMessage sends a message to client.
 func (c *Client) SendMessage(message *Message) {
-    c.lastEventId = message.id
-    c.send <- message
+    c.messages <- message
 }
 
-// Channel returns the channel where this client is subscribe to.
-func (c *Client) Channel() string {
-    return c.channel
+// Listen makes the client wait for messages and emit the messages as SSE
+func (c *Client) Listen() {
+    flusher, ok := c.response.(http.Flusher)
+    if !ok {
+        http.Error(c.response, "Streaming unsupported.", http.StatusInternalServerError)
+        return
+    }
+    
+    c.response.WriteHeader(http.StatusOK)
+    flusher.Flush()
+    
+    for msg := range c.messages {
+        fmt.Fprintf(c.response, msg.String())
+        flusher.Flush()
+    }
 }
 
-func (c *Client) LastEventId() string {
-    return c.lastEventId
+// Close closes the client and exit the Listen function if applicable
+func (c *Client) Close() {
+    close(c.messages)
 }

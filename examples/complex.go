@@ -7,7 +7,7 @@ import (
     "time"
     "os"
 
-    "github.com/alexandrevicenzi/go-sse"
+    "github.com/AdminXVII/go-sse"
 )
 
 func main() {
@@ -20,24 +20,23 @@ func main() {
             "Access-Control-Allow-Methods": "GET, OPTIONS",
             "Access-Control-Allow-Headers": "Keep-Alive,X-Requested-With,Cache-Control,Content-Type,Last-Event-ID",
         },
-        // Custom channel name generator
-        ChannelNameFunc: func (request *http.Request) string {
-            return request.URL.Path
-        },
         // Print debug info
         Logger: log.New(os.Stdout,
           "go-sse: ",
           log.Ldate|log.Ltime|log.Lshortfile),
+        // Add pertinent info first
+        InitClient: func(client *sse.Client, LastEventId string) bool {
+          client.SendMessage(&sse.Message{Id: "42", Data: "This is the answer to life, to the universe and to everything else",})
+          return true
+        },
     })
-
-    defer s.Shutdown()
 
     http.Handle("/", http.FileServer(http.Dir("./static")))
     http.Handle("/events/", s)
 
     go func () {
         for {
-            s.SendMessage("/events/channel-1", sse.SimpleMessage(time.Now().String()))
+            s.SendMessage(&sse.Message{Data: time.Now().String()})
             time.Sleep(5 * time.Second)
         }
     }()
@@ -46,7 +45,7 @@ func main() {
         i := 0
         for {
             i++
-            s.SendMessage("/events/channel-2", sse.SimpleMessage(strconv.Itoa(i)))
+            s.SendMessage(&sse.Message{Data: strconv.Itoa(i)})
             time.Sleep(5 * time.Second)
         }
     }()

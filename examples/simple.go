@@ -6,19 +6,18 @@ import (
     "strconv"
     "time"
 
-    "github.com/alexandrevicenzi/go-sse"
+    "github.com/AdminXVII/go-sse"
 )
 
 func main() {
     s := sse.NewServer(nil)
-    defer s.Shutdown()
 
     http.Handle("/", http.FileServer(http.Dir("./static")))
     http.Handle("/events/", s)
 
     go func () {
         for {
-            s.SendMessage("/events/channel-1", sse.SimpleMessage(time.Now().String()))
+            s.SendMessage(&sse.Message{Data: time.Now().String()})
             time.Sleep(5 * time.Second)
         }
     }()
@@ -27,7 +26,7 @@ func main() {
         i := 0
         for {
             i++
-            s.SendMessage("/events/channel-2", sse.SimpleMessage(strconv.Itoa(i)))
+            s.SendMessage(&sse.Message{Data: strconv.Itoa(i)})
             time.Sleep(5 * time.Second)
         }
     }()

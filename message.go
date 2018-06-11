@@ -6,42 +6,29 @@ import (
 )
 
 type Message struct {
-    id,
-    data,
-    event string
-    retry int
-}
-
-func SimpleMessage(data string) *Message {
-    return NewMessage("", data, "")
-}
-
-func NewMessage(id, data, event string) *Message {
-    return &Message{
-        id,
-        data,
-        event,
-        0,
-    }
+    Id,
+    Data,
+    Event string
+    Retry int
 }
 
 func (m *Message) String() string {
     var buffer bytes.Buffer
 
-    if len(m.id) > 0 {
-        buffer.WriteString(fmt.Sprintf("id: %s\n", m.id))
+    if len(m.Id) > 0 {
+        buffer.WriteString(fmt.Sprintf("id: %s\n", m.Id))
     }
 
-    if m.retry > 0 {
-        buffer.WriteString(fmt.Sprintf("retry: %d\n", m.retry))
+    if m.Retry > 0 {
+        buffer.WriteString(fmt.Sprintf("retry: %d\n", m.Retry))
     }
 
-    if len(m.event) > 0 {
-        buffer.WriteString(fmt.Sprintf("event: %s\n", m.event))
+    if len(m.Event) > 0 {
+        buffer.WriteString(fmt.Sprintf("event: %s\n", m.Event))
     }
 
-    if len(m.data) > 0 {
-        buffer.WriteString(fmt.Sprintf("data: %s\n", m.data))
+    if len(m.Data) > 0 {
+        buffer.WriteString(fmt.Sprintf("data: %s\n", m.Data))
     }
 
     buffer.WriteString("\n")
