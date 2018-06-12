@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// Message decribes what the server can send
+// Message describes what the server can send
 type Message struct {
 	Id,
 	Data,
