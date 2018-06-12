@@ -1,25 +1,25 @@
 package sse
 
 import (
-    "testing"
-    "net/http"
-    "net/http/httptest"
-    "bytes"
+	"bytes"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
 // Implement the CloseNotifier interface
 type CloseRecorder struct {
-  *httptest.ResponseRecorder
-  
-  closeNotify chan bool
+	*httptest.ResponseRecorder
+
+	closeNotify chan bool
 }
 
 // Dummy struct to see if code fail if flush is not available
 // Adapted from httptest.ResponseRecorder
 type NoFlushRecorder struct {
-	Code int
-	HeaderMap http.Header
-	Body *bytes.Buffer
+	Code        int
+	HeaderMap   http.Header
+	Body        *bytes.Buffer
 	result      *http.Response // cache of Result's return value
 	snapHeader  http.Header    // snapshot of HeaderMap at first Write
 	wroteHeader bool
@@ -99,137 +99,136 @@ func (rw *NoFlushRecorder) Write(buf []byte) (int, error) {
 }
 
 func NewCloseRecorder() *CloseRecorder {
-  return &CloseRecorder{
-      httptest.NewRecorder(),
-      make(chan bool),
-  }
+	return &CloseRecorder{
+		httptest.NewRecorder(),
+		make(chan bool),
+	}
 }
 
 func (r *CloseRecorder) CloseNotify() <-chan bool {
-  return r.closeNotify
+	return r.closeNotify
 }
 
 func NewBaseHeaders() map[string]string {
-    baseHeaders := make(map[string]string)
-  
-    baseHeaders["Content-Type"] = "text/event-stream"
-    baseHeaders["Cache-Control"] = "no-cache"
-    baseHeaders["Connection"] = "keep-alive"
-    return baseHeaders
+	baseHeaders := make(map[string]string)
+
+	baseHeaders["Content-Type"] = "text/event-stream"
+	baseHeaders["Cache-Control"] = "no-cache"
+	baseHeaders["Connection"] = "keep-alive"
+	return baseHeaders
 }
 
 func TestNewEmptyClientHeaders(t *testing.T) {
-    rr := httptest.NewRecorder()
-    
-    newClient(rr, nil)
-    
-    headers := NewBaseHeaders()
-    
-    for header, value := range headers {
-        if rr.Header().Get(header) != value {
-            t.Errorf("returned unexpected header: got %v want %v",
-                rr.Header().Get(header), value)
-        }
-    }
+	rr := httptest.NewRecorder()
+
+	newClient(rr, nil)
+
+	headers := NewBaseHeaders()
+
+	for header, value := range headers {
+		if rr.Header().Get(header) != value {
+			t.Errorf("returned unexpected header: got %v want %v",
+				rr.Header().Get(header), value)
+		}
+	}
 }
 
 func TestNewClient(t *testing.T) {
-    rr := httptest.NewRecorder()
-    
-    c := newClient(rr, nil)
-    
-    if rr != c.response {
-        t.Error("Client does not save the response")
-    }
+	rr := httptest.NewRecorder()
+
+	c := newClient(rr, nil)
+
+	if rr != c.response {
+		t.Error("Client does not save the response")
+	}
 }
 
 func TestNewClientHeaders(t *testing.T) {
-    rr := httptest.NewRecorder()
-    
-    headers := make(map[string]string)
-    headers["custom-header"] = "keep"
-    
-    newClient(rr, headers)
-    
-    for header, value := range headers {
-        if rr.Header().Get(header) != value {
-            t.Errorf("returned unexpected header: got %v want %v",
-                rr.Header().Get(header), value)
-        }
-    }
+	rr := httptest.NewRecorder()
+
+	headers := make(map[string]string)
+	headers["custom-header"] = "keep"
+
+	newClient(rr, headers)
+
+	for header, value := range headers {
+		if rr.Header().Get(header) != value {
+			t.Errorf("returned unexpected header: got %v want %v",
+				rr.Header().Get(header), value)
+		}
+	}
 }
 
 func TestClientResponse(t *testing.T) {
-    rr := NewCloseRecorder()
-    
-    c := newClient(rr, nil)
-    msg := Message{Data: "Hello"}
-    
-    go func(){
-        c.listen()
-      
-        if status := rr.Code; status != http.StatusOK {
-            t.Errorf("handler returned wrong status code: got %v want %v",
-                status, http.StatusOK)
-        }
-        
-        if rr.Body.String() != msg.ToBuffer().String() {
-            t.Errorf("handler returned unexpected body: got %v want %v",
-                rr.Body.String(), msg.ToBuffer().String())
-        }
-    }()
-    
-    c.sendMessage(msg)
-    c.close()
+	rr := NewCloseRecorder()
+
+	c := newClient(rr, nil)
+	msg := Message{Data: "Hello"}
+
+	go func() {
+		c.listen()
+
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusOK)
+		}
+
+		if rr.Body.String() != msg.ToBuffer().String() {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				rr.Body.String(), msg.ToBuffer().String())
+		}
+	}()
+
+	c.sendMessage(msg)
+	c.close()
 }
 
 func TestClientResponseOrder(t *testing.T) {
-    msg := Message{Data: "Hello"}
-    intro := Message{Data: "Yikes"}
-    
-    rr := NewCloseRecorder()
-    c := newClient(rr, nil)
-    c.intro = []Message{intro}
-    
-    go func(){
-        c.listen()
-      
-        if status := rr.Code; status != http.StatusOK {
-            t.Errorf("handler returned wrong status code: got %v want %v",
-                status, http.StatusOK)
-        }
-        
-        buffer := new(bytes.Buffer)
-        intro.ToBuffer().WriteTo(buffer)
-        msg.ToBuffer().WriteTo(buffer)
-        buffer.String()
-        
-        expected := buffer.String()
-        if rr.Body.String() != expected {
-            t.Errorf("handler returned unexpected body: got %v want %v",
-                rr.Body.String(), expected)
-        }
-    }()
-    
-    c.sendMessage(msg)
-    c.close()
+	msg := Message{Data: "Hello"}
+	intro := Message{Data: "Yikes"}
+
+	rr := NewCloseRecorder()
+	c := newClient(rr, nil)
+	c.intro = []Message{intro}
+
+	go func() {
+		c.listen()
+
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusOK)
+		}
+
+		buffer := new(bytes.Buffer)
+		intro.ToBuffer().WriteTo(buffer)
+		msg.ToBuffer().WriteTo(buffer)
+
+		expected := buffer.String()
+		if rr.Body.String() != expected {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				rr.Body.String(), expected)
+		}
+	}()
+
+	c.sendMessage(msg)
+	c.close()
 }
 
 func TestClientNoFlushResponse(t *testing.T) {
-    msg := Message{Data: "Hello"}
-    
-    rr := NewNoFlushRecorder()
-    c := newClient(rr, nil)
-    
-    go func(){
-        c.listen()
-      
-        if status := rr.Code; status != http.StatusInternalServerError {
-            t.Errorf("handler returned wrong status code: got %v want %v",
-                status, http.StatusInternalServerError)
-        }
-    }()
-    
-    c.sendMessage(msg)
-    c.close()
+	msg := Message{Data: "Hello"}
+
+	rr := NewNoFlushRecorder()
+	c := newClient(rr, nil)
+
+	go func() {
+		c.listen()
+
+		if status := rr.Code; status != http.StatusInternalServerError {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusInternalServerError)
+		}
+	}()
+
+	c.sendMessage(msg)
+	c.close()
 }

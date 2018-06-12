@@ -1,4 +1,4 @@
-# go-libsse [![Build Status](https://travis-ci.org/AdminXVII/go-libsse.svg?branch=master)](https://travis-ci.org/AdminXVII/go-libsse) [![GoDoc](https://godoc.org/github.com/AdminXVII/go-libsse?status.svg)](http://godoc.org/github.com/AdminXVII/go-libsse)
+# go-libsse [![Go Report Card](https://goreportcard.com/badge/github.com/AdminXVII/go-libsse)](https://goreportcard.com/report/github.com/AdminXVII/go-libsse)[![Build Status](https://travis-ci.org/AdminXVII/go-libsse.svg?branch=master)](https://travis-ci.org/AdminXVII/go-libsse) [![GoDoc](https://godoc.org/github.com/AdminXVII/go-libsse?status.svg)](http://godoc.org/github.com/AdminXVII/go-libsse)
 
 Server-Sent Events for Go
 
